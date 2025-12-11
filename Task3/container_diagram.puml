@@ -1,0 +1,58 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container Diagram
+
+Person(new_client, "Новый клиент")
+Person(existing_client, "Существующий клиент")
+Person(bo_employee, "Сотрудник бэк-офиса")
+
+System_Boundary(system_ib, "Интернет-банк") {
+
+  Container(ib_web, "Веб-приложение ИБ", "ASP.NET MVC 4.5", "Подача заявок; отображение ставок; подтверждение по SMS")
+
+  ContainerDb(ib_db, "База данных ИБ", "MS SQL", "Данные пользователей и счетов; профили безопасности")
+}
+
+System_Boundary(system_site, "Сайт банка") {
+
+  Container(site_fe, "Frontend", "React", "Каталог депозитов и форма заявки")
+
+  Container(site_be, "Backend", "PHP", "API сайта; обработка заявок")
+}
+
+System_Boundary(system_services, "Новые сервисы MVP") {
+
+  Container(rates_service, "Сервис ставок", ".NET", "Хранение ставок; расчет персональных ставок")
+
+  ContainerDb(rates_db, "База ставок", "MS SQL", "Таблицы ставок и правил персонализации")
+
+  Container(application_service, "Сервис заявок", ".NET", "Прием заявок; управление статусами; интеграция с АБС")
+
+  ContainerDb(app_db, "База заявок", "MS SQL", "Хранение заявок на депозиты и статусов")
+}
+
+System_Ext(abs, "АБС", "Delphi", "Создание депозитных счетов")
+System_Ext(sms_gateway, "СМС-шлюз", "Внешний сервис", "OTP и уведомления")
+System_Ext(callcenter_system, "Система кол-центра", "Java + React", "Работа с заявками")
+
+Rel(new_client, site_fe, "Просмотр и подача заявки")
+Rel(site_fe, site_be, "REST API")
+Rel(site_be, rates_service, "Получение публичных ставок", "HTTPS")
+Rel(site_be, application_service, "Передача заявки", "HTTPS")
+
+Rel(existing_client, ib_web, "Работа в интернет-банке", "HTTPS")
+Rel(ib_web, rates_service, "Получение персональных ставок", "HTTPS")
+Rel(ib_web, application_service, "Отправка заявки", "HTTPS")
+Rel(ib_web, sms_gateway, "Запрос SMS-кода", "HTTPS")
+
+Rel(application_service, app_db, "Запись заявок")
+Rel(rates_service, rates_db, "Сохранение ставок")
+
+Rel(application_service, abs, "Создание депозита", "Async Queue")
+Rel(application_service, sms_gateway, "Уведомления", "HTTPS")
+
+Rel(callcenter_system, application_service, "Получение заявок", "HTTPS")
+Rel(bo_employee, application_service, "Просмотр заявок", "HTTPS")
+
+@enduml

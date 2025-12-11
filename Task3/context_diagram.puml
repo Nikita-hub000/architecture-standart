@@ -1,0 +1,42 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Context Diagram
+
+Person(new_client, "Новый клиент", "Просматривает сайт, подает заявку")
+Person(existing_client, "Существующий клиент", "Пользуется интернет-банком")
+Person(bo_employee, "Сотрудник бэк-офиса", "Обрабатывает заявки")
+Person(callcenter_agent, "Оператор кол-центра", "Принимает заявки с сайта")
+
+System_Boundary(online_deposit_mvp, "Online Deposit MVP") {
+
+  System(site, "Сайт банка", "PHP + React", "Показ депозитов, прием заявки от новых клиентов")
+  System(internet_bank, "Интернет-банк", "ASP.NET MVC 4.5", "Каталог депозитов, персональные ставки, подачи заявки")
+  System(rates_service, "Сервис ставок", "MS SQL", "Хранение и расчет ставок")
+  System(application_service, "Сервис заявок", "API + очередь", "Прием заявок, передача в АБС, уведомления")
+}
+
+System_Ext(abs, "АБС", "Delphi", "Создание депозитных счетов")
+System_Ext(sms_gateway, "СМС-шлюз", "Внешний сервис", "Отправка OTP и уведомлений")
+System_Ext(callcenter_system, "Система кол-центра", "Java + React", "Обработка заявок с сайта")
+
+Rel(new_client, site, "Просмотр ставок, подача заявки", "HTTPS")
+Rel(existing_client, internet_bank, "Просмотр ставок, подача заявки", "HTTPS")
+
+Rel(site, rates_service, "Запрос публичных ставок", "HTTPS")
+Rel(site, application_service, "Передача заявки", "HTTPS")
+
+Rel(internet_bank, rates_service, "Запрос персональных ставок", "HTTPS")
+Rel(internet_bank, application_service, "Создание заявки", "HTTPS")
+Rel(internet_bank, sms_gateway, "Отправка OTP", "HTTPS")
+
+Rel(application_service, abs, "Передача заявки / создание депозита", "Async / Queue")
+Rel(application_service, sms_gateway, "Отправка уведомлений", "HTTPS")
+
+Rel(callcenter_system, application_service, "Получение заявок с сайта", "HTTPS")
+Rel(callcenter_agent, callcenter_system, "Работа с заявками", "")
+
+Rel(bo_employee, application_service, "Просмотр и обработка заявок", "HTTPS")
+Rel(abs, bo_employee, "Работа с данными клиента", "")
+
+@enduml

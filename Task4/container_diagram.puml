@@ -1,0 +1,27 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container
+
+Person(operator, "Оператор кол-центра")
+Person(partner_operator, "Оператор партнёрского кол-центра")
+
+Container(rates_service, "Сервис ставок", ".NET", "REST API, генерация файла ставок")
+
+ContainerDb(rates_db, "База ставок", "MS SQL", "Актуальные ставки и правила")
+
+Container(callcenter_system, "Система кол-центра", "Java + React", "Интерфейс оператора, запрос ставок")
+
+Container(sftp_module, "Модуль выгрузки", "Script", "Создание файла и загрузка на SFTP")
+
+System_Ext(sftp_server, "SFTP партнёра", "", "Приём файлов ставок")
+
+Rel(operator, callcenter_system, "Консультация клиентов")
+Rel(callcenter_system, rates_service, "Получение ставок", "REST")
+
+Rel(rates_service, rates_db, "Чтение/запись")
+Rel(rates_service, sftp_module, "Передача данных для файла")
+
+Rel(sftp_module, sftp_server, "Выгрузка файла", "SFTP")
+
+@enduml
